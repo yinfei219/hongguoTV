@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
 
@@ -15,27 +15,29 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK
+      - name: Install Android SDK 36
         run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "JAVA_HOME=$JAVA_HOME"
+          which sdkmanager
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
 
       - name: Build debug APK
+        working-directory: kotlin-tv
         run: |
-          chmod +x kotlin-tv/gradlew
-          ./kotlin-tv/gradlew -p kotlin-tv :app:assembleDebug --no-daemon
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: HongguoTV-0.9.0-debug
-          path: kotlin-tv/app/build/outputs/apk/debug/app-debug.apk
+          path: kotlin-tv/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
